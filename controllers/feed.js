@@ -106,7 +106,7 @@ exports.updatePost = (req, res, next) => {
                 error.statusCode = 404;
                 throw error;
             }
-            if(imageUrl !== post.imageUrl){
+            if (imageUrl !== post.imageUrl) {
                 clearImage(post.imageUrl);
             }
             post.title = title;
@@ -124,6 +124,31 @@ exports.updatePost = (req, res, next) => {
             next(err);
         });
 };
+
+exports.deletePost = (req, res, next) => {
+    const postId = req.params.postId;
+    Post.findById(postId)
+        .then(post => {
+            // Check logged in user
+            if (!post) {
+                const error = new Error('Could not find post.');
+                error.statusCode = 404;
+                throw error;
+            }
+            clearImage(post.imageUrl);
+            return Post.findByIdAndRemove(postId);
+        })
+        .then(result => {
+            console.log(result);
+            res.status(200).json({ message: 'Deleted post.' });
+        })
+        .catch(err => {
+            if (!err.statusCode) {
+                err.statusCode = 500;
+            }
+            next(err);
+        });
+}
 
 const clearImage = filePath => {
     filePath = path.join(__dirname, '..', filePath);
