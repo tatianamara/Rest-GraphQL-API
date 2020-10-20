@@ -44,6 +44,9 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*'); // Allowing access from all sources
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS'); // Allowing access to this methods
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Allow customers to send extra authorization information and content type in headers
+    if (req.method === 'OPTIONS'){
+        return res.sendStatus(200);
+    }
     next();
 });
 
