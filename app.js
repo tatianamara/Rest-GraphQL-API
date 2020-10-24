@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -45,13 +46,29 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*'); // Allowing access from all sources
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS'); // Allowing access to this methods
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Allow customers to send extra authorization information and content type in headers
-    if (req.method === 'OPTIONS'){
+    if (req.method === 'OPTIONS') {
         return res.sendStatus(200);
     }
     next();
 });
 
 app.use(auth);
+
+app.put('/post-image', (req, res, next) => {
+    if (!req.isAuth) {
+      throw new Error('Not authenticated!');
+    }
+    if (!req.file) {
+      return res.status(200).json({ message: 'No file provided!' });
+    }
+    console.log(req.file.path + 'app.js');
+    if (req.body.oldPath) {
+      clearImage(req.body.oldPath);
+    }
+    return res
+      .status(201)
+      .json({ message: 'File stored.', filePath: req.file.path.replace(/\\/g, "/") });
+  });
 
 app.use(
     '/graphql',
@@ -61,13 +78,13 @@ app.use(
         graphiql: true,
         formatError(err) {
             if (!err.originalError) {
-              return err;
+                return err;
             }
             const data = err.originalError.data;
             const message = err.message || 'An error occurred.';
             const code = err.originalError.code || 500;
             return { message: message, status: code, data: data };
-          }
+        }
     })
 );
 
@@ -75,6 +92,7 @@ app.use((error, req, res, next) => {
     console.log(error);
     const status = error.statusCode || 500;
     const message = error.message;
+    const data = error.data;
     res.status(status).json({ message: message, data: data });
 });
 
@@ -85,3 +103,9 @@ mongoose.connect(
         app.listen(8080);
     })
     .catch(err => console.log(err));
+
+
+const clearImage = filePath => {
+    filePath = path.join(__dirname, '..', filePath);
+    fs.unlink(filePath, err => console.log(err));
+};
