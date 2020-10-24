@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 
 const User = require('../models/user');
 const Post = require('../models/post');
+const { clearImage } = require('../util/file');
 
 module.exports = {
   createUser: async function ({ userInput }, req) {
@@ -60,7 +61,7 @@ module.exports = {
     );
     return { token: token, userId: user._id.toString() };
   },
-  createPost: async function({ postInput }, req) {
+  createPost: async function ({ postInput }, req) {
     if (!req.isAuth) {
       const error = new Error('Not authenticated!');
       error.code = 401;
@@ -107,13 +108,13 @@ module.exports = {
       updatedAt: createdPost.updatedAt.toISOString()
     };
   },
-  posts: async function ({page}, req) {
+  posts: async function ({ page }, req) {
     if (!req.isAuth) {
       const error = new Error('Not authenticated!');
       error.code = 401;
       throw error;
     }
-    if (!page){
+    if (!page) {
       page = 1;
     }
     const perPage = 2;
@@ -136,7 +137,7 @@ module.exports = {
       totalPosts: totalItems
     };
   },
-  post: async function ({postId}, req){
+  post: async function ({ postId }, req) {
     if (!req.isAuth) {
       const error = new Error('Not authenticated!');
       error.code = 401;
@@ -155,7 +156,7 @@ module.exports = {
       updatedAt: post.updatedAt.toISOString()
     };
   },
-  updatePost: async function({postId, postInput}, req){
+  updatePost: async function ({ postId, postInput }, req) {
     if (!req.isAuth) {
       const error = new Error('Not authenticated!');
       error.code = 401;
@@ -167,7 +168,7 @@ module.exports = {
       error.code = 404;
       throw error;
     }
-    if(post.creator._id.toString() !== req.userId.toString()){
+    if (post.creator._id.toString() !== req.userId.toString()) {
       const error = new Error('Not authorized!');
       error.code = 403;
       throw error;
@@ -193,7 +194,7 @@ module.exports = {
     }
     post.title = postInput.title;
     post.content = postInput.content;
-    if(postInput.imageUrl !== 'undefined'){
+    if (postInput.imageUrl !== 'undefined') {
       post.imageUrl = postInput.imageUrl;
     }
     const updatedPost = await post.save();
@@ -203,5 +204,30 @@ module.exports = {
       createdAt: updatedPost.createdAt.toISOString(),
       updatedAt: updatedPost.updatedAt.toISOString()
     };
+  },
+  deletePost: async function ({ postId }, req) {
+    if (!req.isAuth) {
+      const error = new Error('Not authenticated!');
+      error.code = 401;
+      throw error;
+    }
+    const post = await Post.findById(postId);
+    if (!post) {
+      const error = new Error('No post found!');
+      error.code = 404;
+      throw error;
+    }
+    if (post.creator.toString() !== req.userId.toString()) {
+      const error = new Error('Not authorized!');
+      error.code = 403;
+      throw error;
+    }
+    clearImage(post.imageUrl);
+    await Post.findByIdAndRemove(postId);
+    const user = await User.findById(req.userId);
+    user.posts.pull(postId);
+    await user.save();
+
+    return true;
   }
 };
