@@ -80,7 +80,7 @@ module.exports = {
       throw error;
     }
     const user = await User.findById(req.userId);
-    if (!user){
+    if (!user) {
       const error = new Error('Invalid user.');
       error.data = errors;
       error.code = 401;
@@ -100,6 +100,33 @@ module.exports = {
       _id: createdPost._id.toString(),
       createdAt: createdPost.createdAt.toISOString(),
       updatedAt: createdPost.updatedAt.toISOString()
+    };
+  },
+  posts: async function (args, req) {
+    if (!req.isAuth) {
+      const error = new Error('Not authenticated!');
+      error.code = 401;
+      throw error;
+    }
+    //const currentPage = req.query.page || 1;
+    const perPage = 2;
+    const totalItems = await Post.find().countDocuments();
+    const posts = await Post.find()
+      .populate('creator')
+      .sort({ createdAt: -1 })
+      //.skip((currentPage - 1) * perPage)
+      //.limit(perPage);
+
+    return {
+      posts: posts.map(p => {
+        return {
+          ...p._doc,
+          _id: p._id.toString(),
+          createdAt: p.createdAt.toISOString(),
+          updatedAt: p.updatedAt.toISOString()
+        };
+      }),
+      totalPosts: totalItems
     };
   }
 };
