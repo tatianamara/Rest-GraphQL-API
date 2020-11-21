@@ -1,4 +1,4 @@
-# RestApi_Project
+# Rest Api Project
 
 This rest api was created during the Complete guide of NodeJS by Maximilian Schwarzmüller
 
