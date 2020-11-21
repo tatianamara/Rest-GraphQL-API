@@ -1,7 +1,5 @@
 # Rest Api Project
 
-This rest api was created during the Complete guide of NodeJS by Maximilian Schwarzmüller
-
 This REST/GraphQL api was created during the Complete guide of NodeJS by Maximilian Schwarzmüller.  
 
 It is an api to be used together with a blog's front-end application: https://github.com/tatianamara/frontend-starting-setup  
